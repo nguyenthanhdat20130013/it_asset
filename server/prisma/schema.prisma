@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  address     String?
+  email       String?
+  phone       String?
+  status      String   @default("ACTIVE") // ACTIVE, INACTIVE
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departments Department[]
+  employees   Employee[]
+  assets      Asset[]
+  sims        Sim[]
+  users       User[]
+  projects    Project[]
+
+  @@map("companies")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  companyId   String
+  status      String   @default("UPCOMING") // UPCOMING, PREPARING, DELIVERED, INSTALLED, RETURN_WAITING, COMPLETED
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  assets      Asset[]
+  sims        Sim[]
+
+  @@map("projects")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  companyId   String
+  code        String
+  name        String
+  managerId   String?
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  employees   Employee[]
+  assets      Asset[]
+
+  @@map("departments")
+}
+
+model Employee {
+  id          String   @id @default(uuid())
+  companyId   String
+  departmentId String?
+  code        String   @unique
+  name        String
+  email       String   @unique
+  jobTitle    String?
+  joinDate    DateTime?
+  status      String   @default("ACTIVE") // ACTIVE, RESIGNED, ON_LEAVE
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company    @relation(fields: [companyId], references: [id])
+  department  Department? @relation(fields: [departmentId], references: [id])
+  
+  assignedAssets AssetHistory[]
+  user           User?
+  currentAssets  Asset[]
+  softwareAssignments SoftwareAssignment[]
+
+  @@map("employees")
+}
+
+model Asset {
+  id           String   @id @default(uuid())
+  companyId    String
+  departmentId String?  
+  employeeId   String?  
+  projectId    String?  
+  typeId       String?  
+  tag          String   @unique
+  name         String
+  type         String?  
+  brand        String?
+  config       String?  
+  customAttributes Json? 
+  serialNumber String?
+  purchaseDate DateTime?
+  warrantyExpiry DateTime?
+  value        Decimal?
+  status       String   @default("IN_STOCK") 
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company      Company  @relation(fields: [companyId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  project      Project?  @relation(fields: [projectId], references: [id])
+  deviceType   DeviceType? @relation(fields: [typeId], references: [id])
+  
+  history      AssetHistory[]
+  sims         Sim[] 
+
+  @@map("assets")
+}
+
+model DeviceType {
+  id          String   @id @default(uuid())
+  name        String   @unique 
+  schema      Json     
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assets      Asset[]
+
+  @@map("device_types")
+}
+
+model AssetHistory {
+  id           String   @id @default(uuid())
+  assetId      String
+  employeeId   String?
+  assignedDate DateTime @default(now())
+  returnDate   DateTime?
+  status       String   
+  notes        String?
+
+  asset        Asset    @relation(fields: [assetId], references: [id])
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+
+  @@map("asset_history")
+}
+
+model Sim {
+  id             String   @id @default(uuid())
+  companyId      String
+  number         String   @unique
+  carrier        String?
+  plan           String?
+  registrationDate DateTime? 
+  activationDate DateTime?
+  expiryDate     DateTime?
+  employeeId     String? 
+  projectId      String?
+  assetId        String?
+  status         String   @default("ACTIVE") 
+  notes          String?
+
+  company        Company  @relation(fields: [companyId], references: [id])
+  project        Project? @relation(fields: [projectId], references: [id])
+  asset          Asset?   @relation(fields: [assetId], references: [id]) 
+  
+  @@map("sims")
+}
+
+model CalendarEvent {
+  id           String   @id @default(uuid())
+  title        String
+  type         String   
+  startDate    DateTime
+  endDate      DateTime?
+  relatedId    String?
+  relatedType  String?  
+  description  String?
+  createdAt    DateTime @default(now())
+  
+  @@map("calendar_events")
+}
+
+model Task {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  dueDate      DateTime?
+  priority     String   @default("MEDIUM")
+  status       String   @default("PENDING") 
+  relatedId    String?
+  relatedType  String?
+  createdAt    DateTime @default(now())
+  
+  @@map("tasks")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  password     String
+  role         String   @default("EMPLOYEE") 
+  employeeId   String?  @unique
+  companyId    String? 
+
+  employee     Employee? @relation(fields: [employeeId], references: [id])
+  company      Company?  @relation(fields: [companyId], references: [id])
+
+  @@map("users")
+}
+
+model Software {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  developer   String?
+  description String?
+  category    String?  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  licenses    SoftwareLicense[]
+
+  @@map("software")
+}
+
+model SoftwareLicense {
+  id            String   @id @default(uuid())
+  softwareId    String
+  licenseKey    String?
+  type          String   @default("SUBSCRIPTION") 
+  seats         Int      @default(1)
+  purchaseDate  DateTime?
+  expiryDate    DateTime?
+  cost          Decimal? @db.Decimal(10, 2)
+  currency      String   @default("VND")
+  notes         String?
+  status        String   @default("ACTIVE") 
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  software      Software @relation(fields: [softwareId], references: [id])
+  assignments   SoftwareAssignment[]
+
+  @@map("software_licenses")
+}
+
+model SoftwareAssignment {
+  id           String   @id @default(uuid())
+  licenseId    String
+  employeeId   String
+  assignedDate DateTime @default(now())
+  returnDate   DateTime?
+  notes        String?
+
+  license      SoftwareLicense @relation(fields: [licenseId], references: [id])
+  employee     Employee        @relation(fields: [employeeId], references: [id])
+
+  @@map("software_assignments")
+}
