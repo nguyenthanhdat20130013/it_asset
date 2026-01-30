@@ -15,13 +15,16 @@ app.use(helmet()); // Set security HTTP headers
 app.use(xss()); // Sanitize data against XSS
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 
+// Trust proxy is required when running behind Nginx/Docker to get real IP
+app.set('trust proxy', 1);
+
 /**
  * Rate Limiting Configuration
- * Limits requests to 100 per 15 minutes per IP
+ * Limits requests to 1000 per 15 minutes per IP
  */
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 1000, // Limit each IP to 100 requests per windowMs
     message: 'Too many requests from this IP, please try again after 15 minutes'
 });
 app.use('/api/', limiter);

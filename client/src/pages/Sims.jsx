@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, Select, DatePicker, message, Space, Tag } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import api from '../api';
+import SimDetailModal from '../components/SimDetailModal';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
@@ -17,6 +18,8 @@ const Sims = () => {
     const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSim, setEditingSim] = useState(null);
+    const [selectedSim, setSelectedSim] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [form] = Form.useForm();
 
     useEffect(() => {
@@ -117,7 +120,25 @@ const Sims = () => {
                 </Space>
             </div>
 
-            <Table columns={columns} dataSource={sims} rowKey="id" loading={loading} />
+            <Table
+                columns={columns}
+                dataSource={sims}
+                rowKey="id"
+                loading={loading}
+                onRow={(record) => ({
+                    onClick: () => {
+                        setSelectedSim(record);
+                        setIsDetailModalOpen(true);
+                    },
+                    style: { cursor: 'pointer' }
+                })}
+            />
+
+            <SimDetailModal
+                visible={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                sim={selectedSim}
+            />
 
             <Modal
                 title={editingSim ? "Edit SIM" : "Add SIM"}

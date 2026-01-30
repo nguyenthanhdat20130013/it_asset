@@ -136,9 +136,32 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
-        await prisma.asset.delete({ where: { id } });
+
+        await prisma.$transaction(async (prisma) => {
+            // 1. Delete associated AssetHistory records
+            await prisma.assetHistory.deleteMany({
+                where: { assetId: id }
+            });
+
+            // 2. Unlink associated Sims (set assetId to null)
+            await prisma.sim.updateMany({
+                where: { assetId: id },
+                data: { assetId: null }
+            });
+
+            // 3. Delete the Asset
+            await prisma.asset.delete({
+                where: { id }
+            });
+        });
+
         res.status(204).send();
     } catch (error) {
+        console.error('Delete asset error:', error);
+        // Check for specific Prisma error codes if needed, but for now specific message is better
+        if (error.code === 'P2003') {
+            return res.status(400).json({ error: 'Cannot delete asset because it is referenced by other records (e.g. Projects)' });
+        }
         res.status(400).json({ error: error.message });
     }
 };

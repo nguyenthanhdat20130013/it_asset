@@ -110,7 +110,8 @@ const Assets = () => {
                     message.success('Asset deleted');
                     fetchAssets();
                 } catch (error) {
-                    message.error('Failed to delete asset');
+                    const errorMsg = error.response?.data?.error || 'Failed to delete asset';
+                    message.error(errorMsg);
                 }
             }
         });
