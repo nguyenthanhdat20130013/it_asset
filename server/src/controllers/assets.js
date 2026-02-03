@@ -7,10 +7,11 @@ const prisma = require('../prisma');
  */
 exports.getAll = async (req, res) => {
     try {
-        const { companyId, type, status, employeeId, search, departmentId } = req.query;
+        const { companyId, typeId, type, status, employeeId, search, departmentId } = req.query;
         const where = {};
         if (companyId && companyId !== 'undefined' && companyId !== 'null') where.companyId = companyId;
         if (departmentId && departmentId !== 'undefined' && departmentId !== 'null') where.departmentId = departmentId;
+        if (typeId && typeId !== 'undefined' && typeId !== 'null') where.typeId = typeId;
         if (type) where.type = type;
         if (status) where.status = status;
         if (employeeId) where.employeeId = employeeId;

@@ -20,24 +20,30 @@ const Sims = () => {
     const [editingSim, setEditingSim] = useState(null);
     const [selectedSim, setSelectedSim] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [filterCompany, setFilterCompany] = useState(null);
     const [form] = Form.useForm();
 
     useEffect(() => {
         fetchData();
     }, []);
 
+    useEffect(() => {
+        fetchSims();
+    }, [filterCompany]);
+
     const fetchData = async () => {
         try {
             const { data } = await api.get('/companies');
             setCompanies(data);
-            fetchSims();
         } catch (error) { message.error('Failed to load companies'); }
     };
 
     const fetchSims = async () => {
         setLoading(true);
         try {
-            const { data } = await api.get('/sims');
+            const params = {};
+            if (filterCompany) params.companyId = filterCompany;
+            const { data } = await api.get('/sims', { params });
             setSims(data);
         } catch (error) { message.error('Failed to fetch SIMs'); }
         finally { setLoading(false); }
@@ -107,7 +113,17 @@ const Sims = () => {
 
     return (
         <div>
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+                <Space>
+                    <Select
+                        placeholder="Filter Company"
+                        style={{ width: 180 }}
+                        allowClear
+                        onChange={setFilterCompany}
+                    >
+                        {companies.map(c => <Option key={c.id} value={c.id}>{c.name}</Option>)}
+                    </Select>
+                </Space>
                 <Space>
                     <Button icon={<DownloadOutlined />} onClick={() => exportToExcel(sims, 'SIMs')}>
                         Export

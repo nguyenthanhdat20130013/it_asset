@@ -24,6 +24,7 @@ const Assets = () => {
     // Filters
     const [filterCompany, setFilterCompany] = useState(null);
     const [filterDepartment, setFilterDepartment] = useState(null);
+    const [filterType, setFilterType] = useState(null);
     const [searchText, setSearchText] = useState('');
 
     // Modals
@@ -42,7 +43,7 @@ const Assets = () => {
 
     useEffect(() => {
         fetchAssets();
-    }, [filterCompany, filterDepartment, searchText]);
+    }, [filterCompany, filterDepartment, filterType, searchText]);
 
     const fetchData = async () => {
         try {
@@ -67,6 +68,7 @@ const Assets = () => {
             const params = {};
             if (filterCompany) params.companyId = filterCompany;
             if (filterDepartment) params.departmentId = filterDepartment;
+            if (filterType) params.typeId = filterType;
             if (searchText) params.search = searchText;
 
             const { data } = await api.get('/assets', { params });
@@ -302,6 +304,14 @@ const Assets = () => {
                         {departments
                             .filter(d => !filterCompany || d.companyId === filterCompany)
                             .map(d => <Option key={d.id} value={d.id}>{d.name}</Option>)}
+                    </Select>
+                    <Select
+                        placeholder="Filter Type"
+                        style={{ width: 150 }}
+                        allowClear
+                        onChange={setFilterType}
+                    >
+                        {deviceTypes.map(t => <Option key={t.id} value={t.id}>{t.name}</Option>)}
                     </Select>
                 </Space>
                 <Space>

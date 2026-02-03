@@ -4,7 +4,7 @@ exports.getAll = async (req, res) => {
     try {
         const { companyId, status, search } = req.query;
         const where = {};
-        if (companyId) where.companyId = companyId;
+        if (companyId && companyId !== 'undefined' && companyId !== 'null') where.companyId = companyId;
         if (status) where.status = status;
         if (search) where.number = { contains: search };
 
