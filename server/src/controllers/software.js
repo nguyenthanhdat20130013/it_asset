@@ -2,20 +2,35 @@ const prisma = require('../prisma');
 
 exports.getAll = async (req, res) => {
     try {
-        const software = await prisma.software.findMany({
-            include: {
-                licenses: {
-                    include: {
-                        assignments: {
-                            include: {
-                                employee: true
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const [software, total] = await Promise.all([
+            prisma.software.findMany({
+                skip,
+                take: limit,
+                include: {
+                    licenses: {
+                        include: {
+                            assignments: {
+                                include: {
+                                    employee: true
+                                }
                             }
                         }
                     }
                 }
-            }
+            }),
+            prisma.software.count()
+        ]);
+
+        res.json({
+            data: software,
+            total,
+            page,
+            limit
         });
-        res.json(software);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

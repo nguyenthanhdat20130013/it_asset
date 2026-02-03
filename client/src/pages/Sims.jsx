@@ -16,6 +16,7 @@ const Sims = () => {
     const [sims, setSims] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSim, setEditingSim] = useState(null);
     const [selectedSim, setSelectedSim] = useState(null);
@@ -28,7 +29,7 @@ const Sims = () => {
     }, []);
 
     useEffect(() => {
-        fetchSims();
+        fetchSims(1, pagination.pageSize);
     }, [filterCompany]);
 
     const fetchData = async () => {
@@ -38,15 +39,24 @@ const Sims = () => {
         } catch (error) { message.error('Failed to load companies'); }
     };
 
-    const fetchSims = async () => {
+    const fetchSims = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const params = {};
+            const params = { page, limit };
             if (filterCompany) params.companyId = filterCompany;
             const { data } = await api.get('/sims', { params });
-            setSims(data);
+            setSims(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) { message.error('Failed to fetch SIMs'); }
         finally { setLoading(false); }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchSims(newPagination.current, newPagination.pageSize);
     };
 
     const handleSave = async (values) => {
@@ -141,6 +151,8 @@ const Sims = () => {
                 dataSource={sims}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => {
                         setSelectedSim(record);

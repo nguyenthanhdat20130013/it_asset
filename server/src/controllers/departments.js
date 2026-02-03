@@ -3,15 +3,30 @@ const prisma = require('../prisma');
 exports.getAll = async (req, res) => {
     try {
         const { companyId } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
         const where = companyId ? { companyId } : {};
-        const departments = await prisma.department.findMany({
-            where,
-            include: {
-                company: true,
-                _count: { select: { employees: true } }
-            }
+        const [departments, total] = await Promise.all([
+            prisma.department.findMany({
+                where,
+                skip,
+                take: limit,
+                include: {
+                    company: true,
+                    _count: { select: { employees: true } }
+                }
+            }),
+            prisma.department.count({ where })
+        ]);
+
+        res.json({
+            data: departments,
+            total,
+            page,
+            limit
         });
-        res.json(departments);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

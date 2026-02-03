@@ -2,8 +2,24 @@ const prisma = require('../prisma');
 
 exports.getAll = async (req, res) => {
     try {
-        const types = await prisma.deviceType.findMany();
-        res.json(types);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const [types, total] = await Promise.all([
+            prisma.deviceType.findMany({
+                skip,
+                take: limit
+            }),
+            prisma.deviceType.count()
+        ]);
+
+        res.json({
+            data: types,
+            total,
+            page,
+            limit
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

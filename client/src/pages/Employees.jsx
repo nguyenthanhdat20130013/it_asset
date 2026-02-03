@@ -16,6 +16,7 @@ const Employees = () => {
     const [companies, setCompanies] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
     // Filters
     const [filterCompany, setFilterCompany] = useState(null);
@@ -36,30 +37,32 @@ const Employees = () => {
                 api.get('/companies'),
                 api.get('/departments')
             ]);
-            setCompanies(c.data);
-            setDepartments(d.data);
+            setCompanies(c.data.data || c.data);
+            setDepartments(d.data.data || d.data);
         } catch (error) {
             message.error('Failed to load companies/departments');
         }
     };
 
-    const fetchEmployees = async () => {
+    const fetchEmployees = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const params = {};
+            const params = { page, limit };
             if (filterCompany) params.companyId = filterCompany;
             if (filterDepartment) params.departmentId = filterDepartment;
             if (searchText) params.search = searchText;
-            // Client-side filtering for assets might be easier if backend doesn't support filtering by relation count yet
-            // Or we handle it after fetch if the dataset is small.
-            // Let's modify the fetch to handle it or filter setEmployees(data)
 
             const { data } = await api.get('/employees', { params });
-            let filteredData = data;
+            let filteredData = data.data;
             if (showHasAssetsOnly) {
-                filteredData = data.filter(e => e._count?.currentAssets > 0);
+                filteredData = filteredData.filter(e => e._count?.currentAssets > 0);
             }
             setEmployees(filteredData);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) {
             message.error('Failed to fetch employees');
         } finally {
@@ -73,10 +76,14 @@ const Employees = () => {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchEmployees();
+            fetchEmployees(1, pagination.pageSize);
         }, 300);
         return () => clearTimeout(timer);
     }, [filterCompany, filterDepartment, searchText, showHasAssetsOnly]);
+
+    const handleTableChange = (newPagination) => {
+        fetchEmployees(newPagination.current, newPagination.pageSize);
+    };
 
     useEffect(() => {
         if (editingEmployee && isModalOpen) {
@@ -255,6 +262,8 @@ const Employees = () => {
                 dataSource={employees}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewAssets(record),
                     style: { cursor: 'pointer' }

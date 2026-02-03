@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Card, Tag, Button, Modal, Form, Input, DatePicker, Select, Space, Typography, message, Badge, Drawer, Descriptions, Table } from 'antd';
+import { Card, Tag, Button, Modal, Form, Input, DatePicker, Select, Space, Typography, message, Badge, Drawer, Descriptions, Table, Pagination } from 'antd';
 import { PlusOutlined, CalendarOutlined, PushpinOutlined, VideoCameraOutlined, WifiOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,6 +28,7 @@ const Projects = () => {
     const [sims, setSims] = useState([]);
     const [loading, setLoading] = useState(false);
     const [filterCompany, setFilterCompany] = useState(null);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 }); // Higher default for Kanban
 
     // Modals
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -43,13 +44,13 @@ const Projects = () => {
 
     useEffect(() => {
         fetchInitialData();
-        fetchProjects();
+        fetchProjects(1, pagination.pageSize);
     }, []);
 
     const fetchInitialData = async () => {
         try {
             const { data } = await api.get('/companies');
-            setCompanies(data);
+            setCompanies(data.data || data);
             fetchAssets();
             fetchSims();
         } catch (error) {
@@ -60,7 +61,7 @@ const Projects = () => {
     const fetchAssets = async () => {
         try {
             const { data } = await api.get('/assets');
-            setAssets(data);
+            setAssets(data.data || data);
         } catch (error) {
             console.error('Failed to load assets');
         }
@@ -69,28 +70,37 @@ const Projects = () => {
     const fetchSims = async () => {
         try {
             const { data } = await api.get('/sims');
-            setSims(data);
+            setSims(data.data || data);
         } catch (error) {
             console.error('Failed to load sims');
         }
     };
 
     useEffect(() => {
-        fetchProjects();
+        fetchProjects(1, pagination.pageSize);
     }, [filterCompany]); // Reload when filter changes
 
-    const fetchProjects = async () => {
+    const fetchProjects = async (page = 1, limit = 20) => {
         setLoading(true);
         try {
-            const params = {};
+            const params = { page, limit };
             if (filterCompany) params.companyId = filterCompany;
             const { data } = await api.get('/projects', { params });
-            setProjects(data);
+            setProjects(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) {
             message.error('Failed to load projects');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePageChange = (page, pageSize) => {
+        fetchProjects(page, pageSize);
     };
 
     // Roles
@@ -202,7 +212,17 @@ const Projects = () => {
             overflow: 'hidden'
         }}>
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Title level={3}>Quản lý dự án lắp Camera</Title>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <Title level={3} style={{ margin: 0 }}>Quản lý dự án lắp Camera</Title>
+                    <Pagination
+                        size="small"
+                        current={pagination.current}
+                        pageSize={pagination.pageSize}
+                        total={pagination.total}
+                        onChange={handlePageChange}
+                        showSizeChanger
+                    />
+                </div>
                 <Space>
                     <Select
                         placeholder="Lọc theo công ty"

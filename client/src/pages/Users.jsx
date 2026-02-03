@@ -9,25 +9,35 @@ const Users = () => {
     const { t } = useTranslation();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
     const [currentUser, setCurrentUser] = useState(null);
     const [selectedRole, setSelectedRole] = useState('');
     const { user: me } = useAuth();
 
     useEffect(() => {
-        fetchUsers();
+        fetchUsers(pagination.current, pagination.pageSize);
     }, []);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const { data } = await api.get('/users');
-            setUsers(data);
+            const { data } = await api.get(`/users?page=${page}&limit=${limit}`);
+            setUsers(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) {
             message.error('Failed to fetch users');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchUsers(newPagination.current, newPagination.pageSize);
     };
 
     const handleEditRole = (user) => {
@@ -122,6 +132,8 @@ const Users = () => {
                 dataSource={users}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 className="premium-card"
                 style={{ borderRadius: '12px', overflow: 'hidden' }}
             />

@@ -8,6 +8,10 @@ const prisma = require('../prisma');
 exports.getAll = async (req, res) => {
     try {
         const { companyId, typeId, type, status, employeeId, search, departmentId } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
         const where = {};
         if (companyId && companyId !== 'undefined' && companyId !== 'null') where.companyId = companyId;
         if (departmentId && departmentId !== 'undefined' && departmentId !== 'null') where.departmentId = departmentId;
@@ -23,17 +27,28 @@ exports.getAll = async (req, res) => {
             ];
         }
 
-        const assets = await prisma.asset.findMany({
-            where,
-            include: {
-                company: true,
-                department: true,
-                employee: true,
-                deviceType: true,
-                history: true
-            },
+        const [assets, total] = await Promise.all([
+            prisma.asset.findMany({
+                where,
+                skip,
+                take: limit,
+                include: {
+                    company: true,
+                    department: true,
+                    employee: true,
+                    deviceType: true,
+                    history: true
+                },
+            }),
+            prisma.asset.count({ where })
+        ]);
+
+        res.json({
+            data: assets,
+            total,
+            page,
+            limit
         });
-        res.json(assets);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

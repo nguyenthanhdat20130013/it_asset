@@ -3,18 +3,33 @@ const prisma = require('../prisma');
 exports.getAll = async (req, res) => {
     try {
         const { companyId, status, search } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
         const where = {};
         if (companyId && companyId !== 'undefined' && companyId !== 'null') where.companyId = companyId;
         if (status) where.status = status;
         if (search) where.number = { contains: search };
 
-        const sims = await prisma.sim.findMany({
-            where,
-            include: {
-                company: true
-            }
+        const [sims, total] = await Promise.all([
+            prisma.sim.findMany({
+                where,
+                skip,
+                take: limit,
+                include: {
+                    company: true
+                }
+            }),
+            prisma.sim.count({ where })
+        ]);
+
+        res.json({
+            data: sims,
+            total,
+            page,
+            limit
         });
-        res.json(sims);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

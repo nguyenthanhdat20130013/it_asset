@@ -13,6 +13,7 @@ const Departments = () => {
     const [departments, setDepartments] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingDept, setEditingDept] = useState(null);
     const [form] = Form.useForm();
@@ -27,25 +28,34 @@ const Departments = () => {
     }, []);
 
     useEffect(() => {
-        fetchDepartments();
+        fetchDepartments(1, pagination.pageSize);
     }, [filterCompany]);
 
     const fetchCompanies = async () => {
         try {
             const { data } = await api.get('/companies');
-            setCompanies(data);
+            setCompanies(data.data || data); // Small guard if backend returns paginated object here too
         } catch (error) { message.error('Failed to load companies'); }
     };
 
-    const fetchDepartments = async () => {
+    const fetchDepartments = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const params = {};
+            const params = { page, limit };
             if (filterCompany) params.companyId = filterCompany;
             const { data } = await api.get('/departments', { params });
-            setDepartments(data);
+            setDepartments(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) { message.error('Failed to fetch departments'); }
         finally { setLoading(false); }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchDepartments(newPagination.current, newPagination.pageSize);
     };
 
     const handleSave = async (values) => {
@@ -124,6 +134,8 @@ const Departments = () => {
                 dataSource={departments}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),
                     style: { cursor: 'pointer' }

@@ -9,20 +9,34 @@ const DeviceTypes = () => {
     const { t } = useTranslation();
     const { user } = useAuth();
     const [types, setTypes] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
 
     useEffect(() => {
-        fetchTypes();
+        fetchTypes(pagination.current, pagination.pageSize);
     }, []);
 
-    const fetchTypes = async () => {
+    const fetchTypes = async (page = 1, limit = 10) => {
+        setLoading(true);
         try {
-            const { data } = await api.get('/device-types');
-            setTypes(data);
+            const { data } = await api.get(`/device-types?page=${page}&limit=${limit}`);
+            setTypes(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) {
             message.error('Failed to load device types');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchTypes(newPagination.current, newPagination.pageSize);
     };
 
     const handleCreate = async (values) => {
@@ -78,7 +92,14 @@ const DeviceTypes = () => {
                 )}
             </div>
 
-            <Table columns={columns} dataSource={types} rowKey="id" />
+            <Table
+                columns={columns}
+                dataSource={types}
+                rowKey="id"
+                loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
+            />
 
             <Modal
                 title="Create Device Type"

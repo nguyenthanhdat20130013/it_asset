@@ -16,6 +16,7 @@ const Assets = () => {
     const { user } = useAuth();
     const [assets, setAssets] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [companies, setCompanies] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [deviceTypes, setDeviceTypes] = useState([]);
@@ -42,7 +43,7 @@ const Assets = () => {
     }, []);
 
     useEffect(() => {
-        fetchAssets();
+        fetchAssets(1, pagination.pageSize);
     }, [filterCompany, filterDepartment, filterType, searchText]);
 
     const fetchData = async () => {
@@ -62,23 +63,31 @@ const Assets = () => {
         }
     };
 
-    const fetchAssets = async () => {
+    const fetchAssets = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const params = {};
+            const params = { page, limit };
             if (filterCompany) params.companyId = filterCompany;
             if (filterDepartment) params.departmentId = filterDepartment;
             if (filterType) params.typeId = filterType;
             if (searchText) params.search = searchText;
 
             const { data } = await api.get('/assets', { params });
-            // Flatten data for table if needed, or access via relations
-            setAssets(data);
+            setAssets(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) {
             message.error('Failed to fetch assets');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchAssets(newPagination.current, newPagination.pageSize);
     };
 
     const handleEdit = (record) => {
@@ -331,6 +340,8 @@ const Assets = () => {
                 dataSource={assets}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 scroll={{ x: true }}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),

@@ -15,6 +15,7 @@ const Software = () => {
     const { user } = useAuth();
     const [softwareList, setSoftwareList] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [employees, setEmployees] = useState([]);
 
     // Modals
@@ -34,7 +35,7 @@ const Software = () => {
     const [assignForm] = Form.useForm();
 
     useEffect(() => {
-        fetchSoftware();
+        fetchSoftware(pagination.current, pagination.pageSize);
         fetchEmployees();
     }, []);
 
@@ -45,16 +46,25 @@ const Software = () => {
         }
     }, [softwareList]);
 
-    const fetchSoftware = async () => {
+    const fetchSoftware = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const { data } = await api.get('/software');
-            setSoftwareList(data);
+            const { data } = await api.get(`/software?page=${page}&limit=${limit}`);
+            setSoftwareList(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) {
             message.error('Failed to fetch software');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchSoftware(newPagination.current, newPagination.pageSize);
     };
 
     const fetchEmployees = async () => {
@@ -277,6 +287,8 @@ const Software = () => {
                 dataSource={softwareList}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),
                     style: { cursor: 'pointer' }

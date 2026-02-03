@@ -12,6 +12,7 @@ const Companies = () => {
     const { user } = useAuth();
     const [companies, setCompanies] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
     const [editingCompany, setEditingCompany] = useState(null);
@@ -21,16 +22,25 @@ const Companies = () => {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     useEffect(() => {
-        fetchCompanies();
+        fetchCompanies(pagination.current, pagination.pageSize);
     }, []);
 
-    const fetchCompanies = async () => {
+    const fetchCompanies = async (page = 1, limit = 10) => {
         setLoading(true);
         try {
-            const { data } = await api.get('/companies');
-            setCompanies(data);
+            const { data } = await api.get(`/companies?page=${page}&limit=${limit}`);
+            setCompanies(data.data);
+            setPagination({
+                current: data.page,
+                pageSize: data.limit,
+                total: data.total
+            });
         } catch (error) { message.error('Failed to fetch companies'); }
         finally { setLoading(false); }
+    };
+
+    const handleTableChange = (newPagination) => {
+        fetchCompanies(newPagination.current, newPagination.pageSize);
     };
 
     const handleSave = async (values) => {
@@ -102,6 +112,8 @@ const Companies = () => {
                 dataSource={companies}
                 rowKey="id"
                 loading={loading}
+                pagination={pagination}
+                onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),
                     style: { cursor: 'pointer' }
