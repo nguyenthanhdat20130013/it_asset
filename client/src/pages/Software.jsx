@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, Input, Select, DatePicker, message, Space, Tag, Typography, Row, Col, Card, Statistic, Drawer, Descriptions } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserAddOutlined, KeyOutlined, LaptopOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserAddOutlined, KeyOutlined, LaptopOutlined, DownloadOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import dayjs from 'dayjs';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { exportToExcel } from '../utils/exportUtils';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -41,7 +42,7 @@ const Software = () => {
 
     useEffect(() => {
         if (viewingSoftware) {
-            const updated = softwareList.find(s => s.id === viewingSoftware.id);
+            const updated = (softwareList || []).find(s => s.id === viewingSoftware.id);
             if (updated) setViewingSoftware(updated);
         }
     }, [softwareList]);
@@ -50,7 +51,7 @@ const Software = () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/software?page=${page}&limit=${limit}`);
-            setSoftwareList(data.data);
+            setSoftwareList(data.data || []);
             setPagination({
                 current: data.page,
                 pageSize: data.limit,
@@ -69,8 +70,8 @@ const Software = () => {
 
     const fetchEmployees = async () => {
         try {
-            const { data } = await api.get('/employees');
-            setEmployees(data);
+            const { data } = await api.get('/employees', { params: { limit: 1000 } });
+            setEmployees(data.data || []);
         } catch (error) {
             message.error('Failed to load employees');
         }
@@ -164,9 +165,9 @@ const Software = () => {
         {
             title: t('tables.licenses'),
             render: (_, record) => {
-                const totalSeats = record.licenses.reduce((acc, curr) => acc + curr.seats, 0);
-                const assigned = record.licenses.reduce((acc, curr) =>
-                    acc + curr.assignments.filter(a => !a.returnDate).length, 0);
+                const totalSeats = (record.licenses || []).reduce((acc, curr) => acc + (curr.seats || 0), 0);
+                const assigned = (record.licenses || []).reduce((acc, curr) =>
+                    acc + (curr.assignments || []).filter(a => !a.returnDate).length, 0);
                 return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                         <Text style={{ fontSize: '12px' }}>{assigned} / {totalSeats} {t('tables.seatsUsed')}</Text>
@@ -189,6 +190,28 @@ const Software = () => {
         }] : [])
     ];
 
+    const handleExport = async () => {
+        try {
+            message.loading({ content: 'Preparing data export...', key: 'exporting' });
+            const params = { limit: 1000000 };
+            const { data } = await api.get('/software', { params });
+            const exportData = (data.data || []).map(item => ({
+                'Name': item.name,
+                'Category': item.category || '-',
+                'Manufacturer': item.manufacturer || '-',
+                'Total Seats': (item.licenses || []).reduce((acc, l) => acc + (l.seats || 0), 0),
+                'Used Seats': (item.assignments || []).length,
+                'Available': (item.licenses || []).reduce((acc, l) => acc + (l.seats || 0), 0) - (item.assignments || []).length,
+                'Notes': item.notes || '-'
+            }));
+
+            exportToExcel(exportData, 'Software_Full_Report');
+            message.success({ content: 'Export complete!', key: 'exporting' });
+        } catch (error) {
+            message.error({ content: 'Export failed!', key: 'exporting' });
+        }
+    };
+
     const handleViewDetails = (record) => {
         setViewingSoftware(record);
         setIsDetailModalOpen(true);
@@ -202,7 +225,7 @@ const Software = () => {
             title: t('tables.used'),
             render: (r) => (
                 <Space wrap>
-                    {r.assignments.filter(a => !a.returnDate).map(a => (
+                    {(r.assignments || []).filter(a => !a.returnDate).map(a => (
                         <Tag key={a.id} color="processing" closable={canManage} onClose={async (e) => {
                             e.preventDefault();
                             try {
@@ -222,7 +245,7 @@ const Software = () => {
                             {a.employee?.name || 'Unknown Employee'}
                         </Tag>
                     ))}
-                    {canManage && r.assignments.filter(a => !a.returnDate).length < r.seats && (
+                    {canManage && (r.assignments || []).filter(a => !a.returnDate).length < (r.seats || 0) && (
                         <Button size="small" type="dashed" icon={<UserAddOutlined />} onClick={() => { setTargetLicense(r); setIsAssignModalOpen(true); }}>Assign</Button>
                     )}
                 </Space>
@@ -261,22 +284,27 @@ const Software = () => {
             {loading && <LoadingSpinner fullPage />}
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Title level={2}>Software Asset Management</Title>
-                {canManage && (
-                    <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => { setEditingSoftware(null); softwareForm.resetFields(); setIsSoftwareModalOpen(true); }}>
-                        Add Software
+                <Space>
+                    <Button icon={<DownloadOutlined />} onClick={handleExport}>
+                        Export
                     </Button>
-                )}
+                    {canManage && (
+                        <Button type="primary" icon={<PlusOutlined />} size="large" onClick={() => { setEditingSoftware(null); softwareForm.resetFields(); setIsSoftwareModalOpen(true); }}>
+                            Add Software
+                        </Button>
+                    )}
+                </Space>
             </div>
 
             <Row gutter={16} style={{ marginBottom: 24 }}>
                 <Col span={6}>
-                    <Card><Statistic title="Total Software" value={softwareList.length} /></Card>
+                    <Card><Statistic title="Total Software" value={pagination.total} /></Card>
                 </Col>
                 <Col span={6}>
                     <Card>
                         <Statistic
                             title="Total Seats"
-                            value={softwareList.reduce((acc, s) => acc + s.licenses.reduce((la, l) => la + l.seats, 0), 0)}
+                            value={(softwareList || []).reduce((acc, s) => acc + (s.licenses || []).reduce((la, l) => la + (l.seats || 0), 0), 0)}
                         />
                     </Card>
                 </Col>
@@ -287,7 +315,12 @@ const Software = () => {
                 dataSource={softwareList}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),

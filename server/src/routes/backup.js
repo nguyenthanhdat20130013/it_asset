@@ -6,7 +6,10 @@ const { authenticate, authorize } = require('../middleware/auth');
 router.use(authenticate);
 router.use(authorize(['ADMIN']));
 
-router.get('/', backupController.backup);
-router.post('/restore', backupController.restore);
+router.get('/health', (req, res) => res.json({ status: 'backup ok' }));
+router.get('/', backupController.backup); // Fallback to root
+router.get('/export', backupController.backup);
+router.post('/import', backupController.restore);
+router.post('/restore', backupController.restore); // Fallback
 
 module.exports = router;

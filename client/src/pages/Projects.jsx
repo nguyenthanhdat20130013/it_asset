@@ -6,6 +6,7 @@ import api from '../api';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
+import SimDetailModal from '../components/SimDetailModal';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -37,6 +38,8 @@ const Projects = () => {
     const [assignSimModal, setAssignSimModal] = useState(null); // projectId
     const [viewingProject, setViewingProject] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [selectedSim, setSelectedSim] = useState(null);
+    const [isSimDetailModalOpen, setIsSimDetailModalOpen] = useState(false);
 
     const [form] = Form.useForm();
     const [assetForm] = Form.useForm();
@@ -49,8 +52,8 @@ const Projects = () => {
 
     const fetchInitialData = async () => {
         try {
-            const { data } = await api.get('/companies');
-            setCompanies(data.data || data);
+            const { data } = await api.get('/companies', { params: { limit: 1000 } });
+            setCompanies(data.data);
             fetchAssets();
             fetchSims();
         } catch (error) {
@@ -60,8 +63,8 @@ const Projects = () => {
 
     const fetchAssets = async () => {
         try {
-            const { data } = await api.get('/assets');
-            setAssets(data.data || data);
+            const { data } = await api.get('/assets', { params: { limit: 1000 } });
+            setAssets(data.data);
         } catch (error) {
             console.error('Failed to load assets');
         }
@@ -69,8 +72,8 @@ const Projects = () => {
 
     const fetchSims = async () => {
         try {
-            const { data } = await api.get('/sims');
-            setSims(data.data || data);
+            const { data } = await api.get('/sims', { params: { limit: 1000 } });
+            setSims(data.data);
         } catch (error) {
             console.error('Failed to load sims');
         }
@@ -221,6 +224,8 @@ const Projects = () => {
                         total={pagination.total}
                         onChange={handlePageChange}
                         showSizeChanger
+                        pageSizeOptions={['10', '20', '50', '100']}
+                        showTotal={(total) => t('tables.totalItems', { total })}
                     />
                 </div>
                 <Space>
@@ -473,12 +478,25 @@ const Projects = () => {
                                         { title: t('tables.carrier'), dataIndex: 'carrier' },
                                         { title: t('tables.status'), dataIndex: 'status', render: s => t(`status.${s}`) || s }
                                     ]}
+                                    onRow={(record) => ({
+                                        onClick: () => {
+                                            setSelectedSim(record);
+                                            setIsSimDetailModalOpen(true);
+                                        },
+                                        style: { cursor: 'pointer' }
+                                    })}
                                 />
                             ) : <Text type="secondary">Chưa có SIM</Text>}
                         </div>
                     </>
                 )}
             </Modal>
+
+            <SimDetailModal
+                visible={isSimDetailModalOpen}
+                onClose={() => setIsSimDetailModalOpen(false)}
+                sim={selectedSim}
+            />
         </div>
     );
 };

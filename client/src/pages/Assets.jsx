@@ -48,16 +48,17 @@ const Assets = () => {
 
     const fetchData = async () => {
         try {
+            const params = { limit: 1000 };
             const [c, d, t, e] = await Promise.all([
-                api.get('/companies'),
-                api.get('/departments'),
-                api.get('/device-types'),
-                api.get('/employees')
+                api.get('/companies', { params }),
+                api.get('/departments', { params }),
+                api.get('/device-types', { params }),
+                api.get('/employees', { params })
             ]);
-            setCompanies(c.data);
-            setDepartments(d.data);
-            setDeviceTypes(t.data);
-            setEmployees(e.data);
+            setCompanies(c.data.data || []);
+            setDepartments(d.data.data || []);
+            setDeviceTypes(t.data.data || []);
+            setEmployees(e.data.data || []);
         } catch (error) {
             message.error('Failed to load initial data');
         }
@@ -73,7 +74,7 @@ const Assets = () => {
             if (searchText) params.search = searchText;
 
             const { data } = await api.get('/assets', { params });
-            setAssets(data.data);
+            setAssets(data.data || []);
             setPagination({
                 current: data.page,
                 pageSize: data.limit,
@@ -88,6 +89,38 @@ const Assets = () => {
 
     const handleTableChange = (newPagination) => {
         fetchAssets(newPagination.current, newPagination.pageSize);
+    };
+
+    const handleExport = async () => {
+        try {
+            message.loading({ content: 'Preparing data export...', key: 'exporting' });
+            const params = { limit: 1000000 };
+            if (filterCompany) params.companyId = filterCompany;
+            if (filterDepartment) params.departmentId = filterDepartment;
+            if (filterType) params.typeId = filterType;
+            if (searchText) params.search = searchText;
+
+            const { data } = await api.get('/assets', { params });
+            const exportData = (data.data || []).map(item => ({
+                'Tag': item.tag,
+                'Name': item.name,
+                'Serial Number': item.serialNumber,
+                'Type': item.deviceType?.name || '-',
+                'Company': item.company?.name || '-',
+                'Department': item.department?.name || '-',
+                'Assigned To': item.employee?.name || '-',
+                'Status': t(`status.${item.status}`),
+                'Purchase Date': item.purchaseDate ? dayjs(item.purchaseDate).format('YYYY-MM-DD') : '-',
+                'Warranty Expiry': item.warrantyExpiry ? dayjs(item.warrantyExpiry).format('YYYY-MM-DD') : '-',
+                'Value': item.value ? `$${item.value}` : '-',
+                'Notes': item.notes || '-'
+            }));
+
+            exportToExcel(exportData, 'Assets_Full_Report');
+            message.success({ content: 'Export complete!', key: 'exporting' });
+        } catch (error) {
+            message.error({ content: 'Export failed!', key: 'exporting' });
+        }
     };
 
     const handleEdit = (record) => {
@@ -131,11 +164,11 @@ const Assets = () => {
     const handleSave = async (values) => {
         try {
             // Extract custom attributes based on device type schema
-            const selectedType = deviceTypes.find(t => t.id === values.typeId);
+            const selectedType = (deviceTypes || []).find(t => t.id === values.typeId);
             let customAttributes = {};
             if (selectedType && selectedType.schema) {
                 // For simplicity, we grab all fields that match schema keys
-                const schema = typeof selectedType.schema === 'string' ? JSON.parse(selectedType.schema) : selectedType.schema;
+                const schema = typeof selectedType.schema === 'string' ? JSON.parse(selectedType.schema) : (selectedType.schema || []);
                 schema.forEach(field => {
                     if (values[field.key]) customAttributes[field.key] = values[field.key];
                 });
@@ -260,7 +293,7 @@ const Assets = () => {
 
     // Dynamic Form Fields renderer
     const selectedTypeId = Form.useWatch('typeId', form);
-    const selectedType = deviceTypes.find(t => t.id === selectedTypeId);
+    const selectedType = (deviceTypes || []).find(t => t.id === selectedTypeId);
 
     const renderDynamicFields = () => {
         if (!selectedType || !selectedType.schema) return null;
@@ -324,7 +357,7 @@ const Assets = () => {
                     </Select>
                 </Space>
                 <Space>
-                    <Button icon={<DownloadOutlined />} onClick={() => exportToExcel(assets, 'Assets')}>
+                    <Button icon={<DownloadOutlined />} onClick={handleExport}>
                         Export
                     </Button>
                     {canManage && (
@@ -340,7 +373,12 @@ const Assets = () => {
                 dataSource={assets}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 scroll={{ x: true }}
                 onRow={(record) => ({
@@ -382,11 +420,11 @@ const Assets = () => {
 
                         {/* Device Specs */}
                         {(() => {
-                            const type = deviceTypes.find(t => t.id === viewingAsset.typeId);
+                            const type = (deviceTypes || []).find(t => t.id === viewingAsset.typeId);
                             if (type && type.schema) {
                                 let schema = [];
                                 try {
-                                    schema = typeof type.schema === 'string' ? JSON.parse(type.schema) : type.schema;
+                                    schema = typeof type.schema === 'string' ? JSON.parse(type.schema) : (type.schema || []);
                                 } catch (e) { }
 
                                 if (schema.length > 0) {

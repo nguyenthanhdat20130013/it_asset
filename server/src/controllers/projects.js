@@ -20,7 +20,7 @@ exports.getAll = async (req, res) => {
                     assets: {
                         include: { deviceType: true, sims: true }
                     },
-                    sims: true
+                    sims: { include: { company: true } }
                 },
                 orderBy: { createdAt: 'desc' }
             }),
@@ -79,7 +79,7 @@ exports.update = async (req, res) => {
             include: {  // Return updated data with relations
                 company: true,
                 assets: { include: { deviceType: true } },
-                sims: true
+                sims: { include: { company: true } }
             }
         });
         res.json(project);

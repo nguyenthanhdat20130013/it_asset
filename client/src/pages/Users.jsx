@@ -132,7 +132,12 @@ const Users = () => {
                 dataSource={users}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 className="premium-card"
                 style={{ borderRadius: '12px', overflow: 'hidden' }}

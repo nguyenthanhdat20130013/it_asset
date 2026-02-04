@@ -33,12 +33,13 @@ const Employees = () => {
 
     const fetchData = async () => {
         try {
+            const params = { limit: 1000 };
             const [c, d] = await Promise.all([
-                api.get('/companies'),
-                api.get('/departments')
+                api.get('/companies', { params }),
+                api.get('/departments', { params })
             ]);
-            setCompanies(c.data.data || c.data);
-            setDepartments(d.data.data || d.data);
+            setCompanies(c.data.data);
+            setDepartments(d.data.data);
         } catch (error) {
             message.error('Failed to load companies/departments');
         }
@@ -93,6 +94,33 @@ const Employees = () => {
             });
         }
     }, [editingEmployee, isModalOpen, form]);
+
+    const handleExport = async () => {
+        try {
+            message.loading({ content: 'Preparing data export...', key: 'exporting' });
+            const params = { limit: 1000000 };
+            if (filterCompany) params.companyId = filterCompany;
+            if (filterDepartment) params.departmentId = filterDepartment;
+            if (showHasAssetsOnly) params.hasAssets = true;
+
+            const { data } = await api.get('/employees', { params });
+            const exportData = (data.data || []).map(item => ({
+                'ID': item.employeeId,
+                'Name': item.name,
+                'Email': item.email,
+                'Company': item.company?.name || '-',
+                'Department': item.department?.name || '-',
+                'Position': item.position || '-',
+                'Total Assets': item.assets?.length || 0,
+                'Status': item.status || '-'
+            }));
+
+            exportToExcel(exportData, 'Employees_Full_Report');
+            message.success({ content: 'Export complete!', key: 'exporting' });
+        } catch (error) {
+            message.error({ content: 'Export failed!', key: 'exporting' });
+        }
+    };
 
     const handleEdit = (record) => {
         setEditingEmployee(record);
@@ -246,7 +274,7 @@ const Employees = () => {
                     </Checkbox>
                 </Space>
                 <Space>
-                    <Button icon={<DownloadOutlined />} onClick={() => exportToExcel(employees, 'Employees')}>
+                    <Button icon={<DownloadOutlined />} onClick={handleExport}>
                         Export
                     </Button>
                     {isAdmin && (
@@ -262,7 +290,12 @@ const Employees = () => {
                 dataSource={employees}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewAssets(record),

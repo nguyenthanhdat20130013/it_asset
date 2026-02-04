@@ -22,7 +22,7 @@ const DeviceTypes = () => {
         setLoading(true);
         try {
             const { data } = await api.get(`/device-types?page=${page}&limit=${limit}`);
-            setTypes(data.data);
+            setTypes(data.data || []);
             setPagination({
                 current: data.page,
                 pageSize: data.limit,
@@ -97,7 +97,12 @@ const DeviceTypes = () => {
                 dataSource={types}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
             />
 

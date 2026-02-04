@@ -33,7 +33,8 @@ app.use('/api/', limiter);
 app.use(cors());
 
 // Body parser, reading data from body into req.body, with size limit
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 /**
  * Health Check Route

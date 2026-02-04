@@ -34,8 +34,8 @@ const Sims = () => {
 
     const fetchData = async () => {
         try {
-            const { data } = await api.get('/companies');
-            setCompanies(data);
+            const { data } = await api.get('/companies', { params: { limit: 1000 } });
+            setCompanies(data.data);
         } catch (error) { message.error('Failed to load companies'); }
     };
 
@@ -80,6 +80,30 @@ const Sims = () => {
             form.resetFields();
             fetchSims();
         } catch (error) { message.error('Operation failed'); }
+    };
+
+    const handleExport = async () => {
+        try {
+            message.loading({ content: 'Preparing data export...', key: 'exporting' });
+            const params = { limit: 1000000 };
+            if (filterCompany) params.companyId = filterCompany;
+
+            const { data } = await api.get('/sims', { params });
+            const exportData = (data.data || []).map(item => ({
+                'Phone Number': item.phoneNumber,
+                'Carrier': item.carrier,
+                'Plan': item.plan,
+                'Company': item.company?.name || '-',
+                'Expiry Date': item.expiryDate ? dayjs(item.expiryDate).format('YYYY-MM-DD') : '-',
+                'Status': t(`status.${item.status}`),
+                'Notes': item.notes || '-'
+            }));
+
+            exportToExcel(exportData, 'Sims_Full_Report');
+            message.success({ content: 'Export complete!', key: 'exporting' });
+        } catch (error) {
+            message.error({ content: 'Export failed!', key: 'exporting' });
+        }
     };
 
     const handleDelete = async (id) => {
@@ -135,7 +159,7 @@ const Sims = () => {
                     </Select>
                 </Space>
                 <Space>
-                    <Button icon={<DownloadOutlined />} onClick={() => exportToExcel(sims, 'SIMs')}>
+                    <Button icon={<DownloadOutlined />} onClick={handleExport}>
                         Export
                     </Button>
                     {canManage && (
@@ -151,7 +175,12 @@ const Sims = () => {
                 dataSource={sims}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => {

@@ -33,8 +33,8 @@ const Departments = () => {
 
     const fetchCompanies = async () => {
         try {
-            const { data } = await api.get('/companies');
-            setCompanies(data.data || data); // Small guard if backend returns paginated object here too
+            const { data } = await api.get('/companies', { params: { limit: 1000 } });
+            setCompanies(data.data);
         } catch (error) { message.error('Failed to load companies'); }
     };
 
@@ -134,7 +134,12 @@ const Departments = () => {
                 dataSource={departments}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),

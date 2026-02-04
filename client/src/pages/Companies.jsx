@@ -112,7 +112,12 @@ const Companies = () => {
                 dataSource={companies}
                 rowKey="id"
                 loading={loading}
-                pagination={pagination}
+                pagination={{
+                    ...pagination,
+                    showSizeChanger: true,
+                    pageSizeOptions: ['10', '20', '50', '100'],
+                    showTotal: (total) => t('tables.totalItems', { total })
+                }}
                 onChange={handleTableChange}
                 onRow={(record) => ({
                     onClick: () => handleViewDetails(record),

@@ -126,7 +126,7 @@ const Dashboard = () => {
                         <Statistic
                             title={t('dashboard.expiringSims')}
                             value={expiringCount}
-                            valueStyle={{ color: expiringCount > 0 ? '#cf1322' : '#3f8600' }}
+                            styles={{ content: { color: expiringCount > 0 ? '#cf1322' : '#3f8600' } }}
                             prefix={<DatabaseOutlined />}
                         />
                     </Card>

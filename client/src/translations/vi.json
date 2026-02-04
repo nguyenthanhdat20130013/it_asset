@@ -82,7 +82,8 @@
         "confirmDelete": "Bạn có chắc chắn muốn xóa?",
         "fields": "Trường dữ liệu",
         "current": "Hiện tại",
-        "unknown": "Không xác định"
+        "unknown": "Không xác định",
+        "totalItems": "Tổng số lượng: {{total}}"
     },
     "users": {
         "title": "Quản lý người dùng",
