@@ -7,10 +7,12 @@
         "assets": "Tài sản",
         "sims": "SIM",
         "calendar": "Lịch",
+        "month": "Tháng",
         "deviceTypes": "Loại thiết bị",
         "projects": "Dự án",
         "software": "Phần mềm",
         "users": "Người dùng",
+        "purchaseOrders": "Quản lý PO",
         "settings": "Cài đặt",
         "logout": "Đăng xuất",
         "role": {
@@ -18,7 +20,23 @@
             "IT_SUPPORT": "Hỗ trợ IT",
             "VIEWER": "Người xem",
             "EMPLOYEE": "Nhân viên"
-        }
+        },
+        "add": "Thêm",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "save": "Lưu",
+        "cancel": "Hủy",
+        "close": "Đóng",
+        "details": "Chi tiết",
+        "assign": "Gán",
+        "return": "Trả",
+        "export": "Xuất",
+        "search": "Tìm kiếm",
+        "filter": "Lọc",
+        "all": "Tất cả",
+        "success": "Thành công",
+        "error": "Lỗi",
+        "loading": "Đang tải..."
     },
     "dashboard": {
         "title": "Tổng quan",
@@ -27,7 +45,8 @@
         "totalProjects": "Tổng dự án",
         "totalCompanies": "Tổng công ty",
         "totalDepartments": "Tổng phòng ban",
-        "totalAssetValue": "Tổng giá trị tài sản ($)",
+        "totalAssetValue": "Tổng giá trị tài sản",
+        "totalPoValue": "Tổng chi phí PO (VND)",
         "totalSims": "Tổng SIM",
         "expiringSims": "SIM hết hạn/sắp hết hạn",
         "warning": "Cảnh báo: SIM đã hết hạn hoặc sắp hết hạn",
@@ -85,6 +104,25 @@
         "unknown": "Không xác định",
         "totalItems": "Tổng số lượng: {{total}}"
     },
+    "modals": {
+        "add": "Thêm {{name}}",
+        "edit": "Sửa {{name}}",
+        "details": "Chi tiết {{name}}",
+        "assign": "Gán {{name}}",
+        "confirm": "Xác nhận",
+        "info": "Thông tin",
+        "history": "Lịch sử"
+    },
+    "messages": {
+        "created": "Đã tạo {{name}} thành công",
+        "updated": "Đã cập nhật {{name}} thành công",
+        "deleted": "Đã xóa {{name}} thành công",
+        "failed": "Thao tác thất bại",
+        "fetchFailed": "Không thể tải {{name}}",
+        "loadFailed": "Không thể nạp {{name}}",
+        "assigned": "Đã gán thành công",
+        "returned": "Đã trả thành công"
+    },
     "users": {
         "title": "Quản lý người dùng",
         "editRole": "Đổi quyền",
@@ -115,5 +153,23 @@
         "restoreData": "Khôi phục dữ liệu",
         "downloadBackup": "Tải bản sao lưu",
         "restoreFromBackup": "Khôi phục từ bản sao lưu"
+    },
+    "purchaseOrders": {
+        "title": "Quản lý PO",
+        "categories": "Danh mục PO",
+        "summary": "Tổng kết chi phí",
+        "addPo": "Thêm PO",
+        "editPo": "Sửa PO",
+        "addCategory": "Thêm danh mục",
+        "allCompanies": "Tất cả công ty",
+        "allCategories": "Tất cả danh mục",
+        "totalByMonth": "Tổng chi phí theo tháng",
+        "totalByCategory": "Tổng chi phí theo danh mục",
+        "amount": "Số tiền",
+        "poNumber": "Mã PO",
+        "poName": "Tên PO",
+        "orderDate": "Ngày đặt",
+        "currency": "Tiền tệ",
+        "exportExcel": "Xuất Excel"
     }
 }

@@ -10,6 +10,7 @@ exports.getAll = async (req, res) => {
             prisma.user.findMany({
                 skip,
                 take: limit,
+                orderBy: { createdAt: 'desc' },
                 select: {
                     id: true,
                     username: true,

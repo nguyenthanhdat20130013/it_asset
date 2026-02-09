@@ -9,7 +9,8 @@ exports.getAll = async (req, res) => {
         const [types, total] = await Promise.all([
             prisma.deviceType.findMany({
                 skip,
-                take: limit
+                take: limit,
+                orderBy: { createdAt: 'desc' }
             }),
             prisma.deviceType.count()
         ]);
