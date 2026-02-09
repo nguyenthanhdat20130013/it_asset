@@ -56,6 +56,7 @@ const tasksRoutes = require('./routes/tasks');
 const reportsRoutes = require('./routes/reports');
 const deviceTypesRoutes = require('./routes/deviceTypes');
 const softwareRoutes = require('./routes/software');
+const purchaseOrdersRoutes = require('./routes/purchaseOrders');
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
@@ -71,6 +72,7 @@ app.use('/api/device-types', deviceTypesRoutes);
 app.use('/api/software', softwareRoutes);
 app.use('/api/backup', require('./routes/backup'));
 app.use('/api/reports', reportsRoutes);
+app.use('/api/purchase-orders', purchaseOrdersRoutes);
 app.use('/api/users', require('./routes/users'));
 
 /**

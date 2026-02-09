@@ -12,6 +12,7 @@ import Projects from './pages/Projects';
 import Software from './pages/Software';
 import Settings from './pages/Settings';
 import Users from './pages/Users';
+import PurchaseOrders from './pages/PurchaseOrders';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -49,6 +50,7 @@ function App() {
             <Route path="device-types" element={<DeviceTypes />} />
             <Route path="projects" element={<Projects />} />
             <Route path="software" element={<Software />} />
+            <Route path="purchase-orders" element={<PurchaseOrders />} />
             <Route path="users" element={<Users />} />
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" />} />

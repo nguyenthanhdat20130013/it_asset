@@ -63,6 +63,7 @@ const MainLayout = () => {
         getItem(t('common.deviceTypes'), '/device-types', <DesktopOutlined />),
         getItem(t('common.projects'), '/projects', <ProjectOutlined />),
         getItem(t('common.software'), '/software', <CloudServerOutlined />),
+        getItem(t('common.purchaseOrders'), '/purchase-orders', <PieChartOutlined />),
         getItem(t('common.users'), '/users', <UserOutlined />), // New item
         getItem(t('common.settings'), '/settings', <SettingOutlined />),
     ];

@@ -16,7 +16,8 @@ exports.getDashboardStats = async (req, res) => {
             assetsCount,
             assetsValueAggregate,
             simsCount,
-            expiringSims
+            expiringSims,
+            poValueAggregate
         ] = await Promise.all([
             prisma.company.count({ where: whereCompany }),
             prisma.department.count({ where: whereCompany }),
@@ -36,6 +37,10 @@ exports.getDashboardStats = async (req, res) => {
                     status: 'ACTIVE'
                 },
                 include: { company: true }
+            }),
+            prisma.purchaseOrder.aggregate({
+                where: whereCompany,
+                _sum: { amount: true }
             })
         ]);
 
@@ -44,7 +49,8 @@ exports.getDashboardStats = async (req, res) => {
             departments: departmentsCount,
             employees: employeesCount,
             assets: assetsCount,
-            assetsValue: assetsValueAggregate._sum.value || 0,
+            assetsValue: assetsValueAggregate._sum.value ? Number(assetsValueAggregate._sum.value) : 0,
+            posValue: poValueAggregate._sum.amount ? Number(poValueAggregate._sum.amount) : 0,
             sims: simsCount,
             expiringSims: expiringSims // Return full array
         });

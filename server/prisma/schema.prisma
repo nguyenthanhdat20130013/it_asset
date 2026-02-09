@@ -24,6 +24,7 @@ model Company {
   sims        Sim[]
   users       User[]
   projects    Project[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("companies")
 }
@@ -259,4 +260,36 @@ model SoftwareAssignment {
   employee     Employee        @relation(fields: [employeeId], references: [id])
 
   @@map("software_assignments")
+}
+
+model PurchaseOrderCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+
+  @@map("purchase_order_categories")
+}
+
+model PurchaseOrder {
+  id          String   @id @default(uuid())
+  poNumber    String   @unique
+  name        String
+  description String?
+  amount      Decimal  @db.Decimal(15, 2)
+  currency    String   @default("VND")
+  status      String   @default("PAID") // PAID, PENDING, CANCELLED
+  orderDate   DateTime @default(now())
+  companyId   String
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company               @relation(fields: [companyId], references: [id])
+  category    PurchaseOrderCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("purchase_orders")
 }
