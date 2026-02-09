@@ -10,6 +10,7 @@ exports.getAll = async (req, res) => {
             prisma.company.findMany({
                 skip,
                 take: limit,
+                orderBy: { createdAt: 'desc' },
                 include: { _count: { select: { employees: true, assets: true } } }
             }),
             prisma.company.count()

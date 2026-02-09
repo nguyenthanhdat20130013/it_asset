@@ -10,6 +10,7 @@ exports.getAll = async (req, res) => {
             prisma.software.findMany({
                 skip,
                 take: limit,
+                orderBy: { createdAt: 'desc' },
                 include: {
                     licenses: {
                         include: {

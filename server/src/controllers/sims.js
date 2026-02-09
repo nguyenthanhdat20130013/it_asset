@@ -17,6 +17,7 @@ exports.getAll = async (req, res) => {
                 where,
                 skip,
                 take: limit,
+                orderBy: { createdAt: 'desc' },
                 include: {
                     company: true
                 }
